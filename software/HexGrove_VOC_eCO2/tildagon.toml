@@ -28,7 +28,7 @@ author = "ThingInnovations"
 license = "MIT"
 
 # URL to the repository of your app.
-url = "https://github.com/thiseldo/hexpansion_grove/tree/main/software/HexGrove_Alcohol"
+url = "https://github.com/thiseldo/hexgrovealcohol"
 
 # Description of your app.  Maximum 140 characters!
 description = "Alcohol vapour detector"

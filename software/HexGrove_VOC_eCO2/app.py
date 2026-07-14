@@ -1,19 +1,20 @@
 import app
 
 from machine import I2C
+import time
 from system.hexpansion.config import HexpansionConfig
 from app_components import clear_background, Menu
 from app_components.tokens import colors
 from events.input import Buttons, BUTTON_TYPES
 from system.eventbus import eventbus
+from tildagonos import tildagonos
 from system.hexpansion.events import HexpansionRemovalEvent, HexpansionInsertionEvent
 from system.hexpansion.util import read_hexpansion_header, detect_eeprom_addr
-from .onewire import DS18X20
-from .onewire import OneWire
-import time
+from system.patterndisplay.events import PatternDisable, PatternEnable, PatternReload
+from .sgp30 import SGP30
 
 
-class HexGrove_DS18B20(app.App):
+class HexGrove_VOC_eCO2(app.App):
     def __init__(self):
         self.button_states = Buttons(self)
         self.text = "No hexpansion found."
@@ -21,9 +22,17 @@ class HexGrove_DS18B20(app.App):
         self.found_hexpansion = False
         self.hexpansion_config = None
         self.pins = None
-        self.ow = None
-        self.temp = None
-        self.value = 0.0
+        self.voc = None
+        self.i2c = None
+        self.value_voc = None
+        self.value_eco2 = None
+
+
+        # This disables the patterndisplay system module, which does the
+        # default colour spinny thing
+        eventbus.emit(PatternDisable())
+
+        self.set_leds( (0,0,0) )
         self.scan_for_hexpansion()
 
         eventbus.on(
@@ -35,40 +44,63 @@ class HexGrove_DS18B20(app.App):
             self.handle_hexpansion_removal,
             self)
 
+    def set_leds(self, colour):
+        for i in range(0, 12):
+            tildagonos.leds[i+1] = colour
+        tildagonos.leds.write()
+
+
     def handle_hexpansion_insertion(self, event):
         self.scan_for_hexpansion()
 
     def handle_hexpansion_removal(self, event):
+        if self.voc:
+            self.voc.close()  # Close the VOC sensor when the hexpansion is removed
+
         self.found_hexpansion = False
-        self.ow = None
-        self.temp = None
+        self.voc = None
+        self.i2c = None
         self.pins = None
         self.hexpansion_config = None
         self.scan_for_hexpansion()
 
+
     def update(self, delta):
         if self.button_states.get(BUTTON_TYPES["CANCEL"]):
+            eventbus.emit(PatternEnable())
+            eventbus.emit(PatternReload())
             self.button_states.clear()
             self.minimise()
-        
-        if self.temp:
-            # perform temperature reading
-            self.temp.start_convertion()
+
+            
+        if self.voc:
+            data = self.voc.measure_air_quality()  # Measure air quality before closing
+            self.value_voc = data[1]
+            self.value_eco2 = data[0]
+
+            #print("\r  tVOC = {} ppb CO2eq = {}  ".format(self.value_voc, self.value_eco2))
             time.sleep(1)
-            self.value = self.temp.read_temp_async()
 
 
     def draw(self, ctx):
         ctx.save()
         clear_background(ctx)
-        if self.temp:
+        if self.value_voc is not None and self.value_eco2 is not None:
+            if self.value_eco2 > 1000:
+                self.set_leds( (1,0,0) )
+                self.color = (1, 0, 0)
+            else:
+                self.set_leds( (0,1,0) )
+                self.color = (0, 1, 0)
+
             x, y, z = self.color
-            textstr = "{:.2f}C".format(self.value)
-            ctx.rgb(x, y, z).move_to(-40, -30).text(textstr)
+            textstr = "tVOC: {:d} ppb\nCO2eq: {:d} ppm".format(self.value_voc, self.value_eco2)
+            ctx.rgb(x, y, z).move_to(-110, -20).text(textstr)
         else:
             x, y, z = self.color
             ctx.rgb(x, y, z).move_to(-90, -40).text(self.text)
         ctx.restore()
+
 
     def scan_for_hexpansion(self):
         found = False
@@ -97,22 +129,23 @@ class HexGrove_DS18B20(app.App):
                 self.color = (0, 1, 0)
                 self.found_hexpansion = True
                 self.hexpansion_config = HexpansionConfig(port)
-                self.pins = {}
-                self.pins["hs_1"] = self.hexpansion_config.pin[1]
-                #print("Pin ")
-                #print(self.pins["hs_1"])
-                self.ow = OneWire(self.pins["hs_1"])
-                devices = self.ow.scan()
-                if len(devices) > 0:
-                    print("DS18B20 devices found")
-                    #print(self.ow.scan())
-                    self.temp = DS18X20(self.ow)
+                self.i2c = i2c
+
+                self.voc = SGP30(self.i2c)
+                print("SGP30 sensor initialized.")
+
+                self.voc.get_serial_id()  # Get the serial ID of the sensor
+                #print("SGP30 Serial ID: ", self.voc.get_serial_id)
+                self.voc.init_air_quality()  # Initialize air quality measurement
+                print("SGP30 Air Quality Measurement Initialized.")
+
             else:
                 print()
+
         if not found:
             self.color = (1, 0, 0)
             self.text = "No hexpansion found."
 
         return None
 
-__app_export__ = HexGrove_DS18B20
+__app_export__ = HexGrove_VOC_eCO2

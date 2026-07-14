@@ -1,6 +1,6 @@
 [app]
 # The name of your app as displayed in the menu
-name = "Hex Grove Alcohol"
+name = "Hex Template"
 
 # The submenu where your app should appear.
 # One of: "Badge", "Music", "Media", "Apps", "Games"
@@ -18,7 +18,7 @@ category = "Apps"
 
 [entry]
 # The name of your entry point `Application` class
-class = "HexGroveAlcohol"
+class = "HexTemplate"
 
 [metadata]
 # Your nickname.  Must be at most 32 characters!
@@ -28,10 +28,10 @@ author = "ThingInnovations"
 license = "MIT"
 
 # URL to the repository of your app.
-url = "https://github.com/thiseldo/hexpansion_grove/tree/main/software/HexGrove_Alcohol"
+url = "https://github.com/thiseldo/hexpansion_grove/tree/main/software/HexGrove_Template"
 
 # Description of your app.  Maximum 140 characters!
-description = "Alcohol vapour detector"
+description = "HexGrove template"
 
 # Version number of your app.  If you push a commit where this number is
 # increased, we interpret this as a new version being released.
