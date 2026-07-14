@@ -3,6 +3,10 @@
 This directory contains MicroPython/Tildagon app modules for HexGrove sensor hexpansions. They curently run on the badge itself but should ideally be updated to
 run from the EEPROM on the hexpansion.
 
+Useful links:
+ * [Running apps on the badge](https://tildagon.badge.emfcamp.org/tildagon-apps/run-on-badge/)
+
+
 ## Folders
 
 | Folder | App Name | Sensor / Purpose | Key Files |
