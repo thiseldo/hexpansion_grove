@@ -4,6 +4,9 @@ This directory contains MicroPython/Tildagon app modules for HexGrove sensor hex
 run from the EEPROM on the hexpansion.
 
 Useful links:
+ * [Seeed Studio Grove sensors](https://wiki.seeedstudio.com/Grove_Sensor_Intro/)
+ * [Hexpansion Overview](https://tildagon.badge.emfcamp.org/hexpansions/)
+ * [Write an app for a hexpansion](https://tildagon.badge.emfcamp.org/hexpansions/writing-hexpansion-apps/)
  * [Running apps on the badge](https://tildagon.badge.emfcamp.org/tildagon-apps/run-on-badge/)
 
 
